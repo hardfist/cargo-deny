@@ -683,7 +683,18 @@ pub fn check(
                 let default_lint_level = if enabled_features.contains("default") {
                     if ctx.krates.workspace_members().any(|n| {
                         if let krates::Node::Krate { id, .. } = n {
-                            id == &krate.id
+                            if id == &krate.id {
+                                return true;
+                            }
+                            // also check workspace member's direct dependencies
+                            if let Some(nid) = ctx.krates.nid_for_kid(id) {
+                                ctx.krates
+                                    .direct_dependencies(nid)
+                                    .iter()
+                                    .any(|dep| dep.krate.id == krate.id)
+                            } else {
+                                false
+                            }
                         } else {
                             false
                         }
